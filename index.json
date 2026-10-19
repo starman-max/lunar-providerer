@@ -1,0 +1,115 @@
+{
+  "name": "Lunar providers",
+  "description": "Zangetsu working-only snapshot (probed 2026-10-09) plus Lunar's own anime/manga scrapers, ported from the app's Dart sources. Serve this folder over HTTPS and point the loaders at it.",
+  "vendored": "2026-10-09",
+  "sources": [
+    {
+      "id": "anikoto",
+      "name": "AniKoto",
+      "version": "1.0.4",
+      "type": "anime",
+      "lang": "en",
+      "file": "providers/anikoto.js",
+      "nsfw": false
+    },
+    {
+      "id": "animegg",
+      "name": "AnimeGG (Lunar)",
+      "version": "1.0.0",
+      "type": "anime",
+      "lang": "en",
+      "file": "providers/animegg.js",
+      "nsfw": false
+    },
+    {
+      "id": "animex",
+      "name": "AnimeX (Lunar)",
+      "version": "1.0.1",
+      "type": "anime",
+      "lang": "en",
+      "file": "providers/animex.js",
+      "nsfw": false
+    },
+    {
+      "id": "flamecomics",
+      "name": "FlameComics (Lunar)",
+      "version": "1.0.0",
+      "type": "manga",
+      "lang": "en",
+      "file": "providers/flamecomics.js",
+      "nsfw": false
+    },
+    {
+      "id": "fourkhdhub",
+      "name": "4K HDHub",
+      "version": "1.0.9",
+      "type": "movie",
+      "lang": "en",
+      "file": "providers/fourkhdhub.js",
+      "nsfw": false
+    },
+    {
+      "id": "gogoanime",
+      "name": "GogoAnime (Lunar)",
+      "version": "1.0.0",
+      "type": "anime",
+      "lang": "en",
+      "file": "providers/gogoanime.js",
+      "nsfw": false
+    },
+    {
+      "id": "hdhub4u",
+      "name": "HDHub4u",
+      "version": "1.2.6",
+      "type": "movie",
+      "lang": "en",
+      "file": "providers/hdhub4u.js",
+      "nsfw": false
+    },
+    {
+      "id": "hianime",
+      "name": "HiAnime",
+      "version": "1.1.1",
+      "type": "anime",
+      "lang": "en",
+      "file": "providers/hianime.js",
+      "nsfw": false
+    },
+    {
+      "id": "hianime-at",
+      "name": "HiAnime.at (Lunar)",
+      "version": "1.0.0",
+      "type": "anime",
+      "lang": "en",
+      "file": "providers/hianime-at.js",
+      "nsfw": false
+    },
+    {
+      "id": "mangakatana",
+      "name": "MangaKatana (Lunar)",
+      "version": "1.0.2",
+      "type": "manga",
+      "lang": "en",
+      "file": "providers/mangakatana.js",
+      "nsfw": false
+    },
+    {
+      "id": "movysx",
+      "name": "Movy",
+      "version": "1.0.0",
+      "type": "movie",
+      "lang": "en",
+      "file": "providers/movysx.js",
+      "nsfw": false
+    },
+    {
+      "id": "weebcentral",
+      "name": "WeebCentral (Lunar)",
+      "version": "1.0.1",
+      "type": "manga",
+      "lang": "en",
+      "file": "providers/weebcentral.js",
+      "nsfw": false
+    }
+  ]
+}
