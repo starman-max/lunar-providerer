@@ -28,10 +28,32 @@ var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
 // delhi pool (Hindi/English/... sources), then the remaining backups.
 var POOLS = ['miami', 'seattle', 'atlanta', 'delhi'];
 
+// Resolves when every promise has settled, or `graceMs` after the first one that produced a result,
+// so one slow mirror/pool no longer holds up streams that are already available. Failures become null.
+// Without setTimeout (some hosts) it simply waits for all of them, like Promise.all.
+function _gather(promises, graceMs, hasResult) {
+  return new Promise(function (resolve) {
+    var out = new Array(promises.length), left = promises.length, timer = null, done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      if (timer && typeof clearTimeout === 'function') clearTimeout(timer);
+      resolve(out);
+    }
+    if (!left) return finish();
+    promises.forEach(function (p, i) {
+      Promise.resolve(p).then(function (v) { out[i] = v; }, function () { out[i] = null; }).then(function () {
+        if (--left === 0) return finish();
+        if (!timer && typeof setTimeout === 'function' && out[i] && hasResult(out[i])) timer = setTimeout(finish, graceMs);
+      });
+    });
+  });
+}
+
 function getInfo() {
   return {
     name: 'Movy', lang: 'en', baseUrl: SITE,
-    logo: SITE + '/favicon.svg', type: 'movie', version: '1.0.0'
+    logo: SITE + '/favicon.svg', type: 'movie', version: '1.0.1'
   };
 }
 
@@ -179,15 +201,21 @@ function _movyDecrypt(raw, seed, mediaId) {
 // Seed cache mirrors the site (ttlMs, default 30s). Fetched once per
 // getVideoSources and shared by all pools (seed is pool-independent).
 var _seedCache = {};
+var _seedFlight = {};
 function _seed(mediaId, fresh) {
   var now = (typeof Date !== 'undefined' && Date.now) ? Date.now() : 0;
   var hit = _seedCache[mediaId];
   if (hit && !fresh && hit.expiresAt > now) return Promise.resolve(hit.seed);
-  return _tj(STREAM + '/seed?mediaId=' + encodeURIComponent(mediaId)).then(function (j) {
+  if (!fresh && _seedFlight[mediaId]) return _seedFlight[mediaId];
+  var pr = _tj(STREAM + '/seed?mediaId=' + encodeURIComponent(mediaId)).then(function (j) {
     if (!j || !j.seed) throw new Error('Movy: no seed');
     _seedCache[mediaId] = { seed: j.seed, expiresAt: now + (j.ttlMs || 30000) };
     return j.seed;
   });
+  _seedFlight[mediaId] = pr;
+  var clear = function () { delete _seedFlight[mediaId]; };
+  pr.then(clear, clear);
+  return pr;
 }
 function _poolSources(pool, q, mediaId, seed, retried) {
   var params = {};
@@ -343,6 +371,7 @@ function _audioLang(label, quality) {
 function getVideoSources(episodeUrl) {
   var p = _parseEp(episodeUrl);
   if (!p) return Promise.reject(new Error('Movy: bad episode url'));
+  _seed(p.id, false).catch(function () {}); // start the seed request now; it only needs the TMDB id
   var metaUrl = 'movy://' + p.kind + '/' + p.id + (p.kind === 'tv' ? '/' + p.s + '/' + p.e : '');
   return getDetail(metaUrl).then(function (det) {
     var q = {
@@ -361,7 +390,8 @@ function getVideoSources(episodeUrl) {
           return { pool: pool, j: j };
         }).catch(function () { return null; });
       });
-      return Promise.all(jobs).then(function (results) {
+      // first pool with streams wins; the others get 1.5 s to add theirs (a dead pool used to cost ~15 s)
+      return _gather(jobs, 1500, function (r) { return r.j && r.j.sources && r.j.sources.length; }).then(function (results) {
         var out = [], seen = {}, subs = [], subSeen = {};
         for (var i = 0; i < results.length; i++) {
           var r = results[i];

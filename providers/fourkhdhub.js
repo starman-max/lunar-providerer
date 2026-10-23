@@ -31,6 +31,28 @@ function _domains() {
   });
 }
 
+// Resolves when every promise has settled, or `graceMs` after the first one that produced a result,
+// so one slow mirror/pool no longer holds up streams that are already available. Failures become null.
+// Without setTimeout (some hosts) it simply waits for all of them, like Promise.all.
+function _gather(promises, graceMs, hasResult) {
+  return new Promise(function (resolve) {
+    var out = new Array(promises.length), left = promises.length, timer = null, done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      if (timer && typeof clearTimeout === 'function') clearTimeout(timer);
+      resolve(out);
+    }
+    if (!left) return finish();
+    promises.forEach(function (p, i) {
+      Promise.resolve(p).then(function (v) { out[i] = v; }, function () { out[i] = null; }).then(function () {
+        if (--left === 0) return finish();
+        if (!timer && typeof setTimeout === 'function' && out[i] && hasResult(out[i])) timer = setTimeout(finish, graceMs);
+      });
+    });
+  });
+}
+
 function getInfo() {
   return {
     name: '4K HDHub', lang: 'en', baseUrl: 'https://4khdhub.one',
@@ -351,7 +373,7 @@ function _hubcloud(url) {
         if (!link) continue;
         jobs.push(_hubServer(link, text, info));
       }
-      return Promise.all(jobs).then(function (lists) {
+      return _gather(jobs, 1500, function (s) { return !!s; }).then(function (lists) {
         var out = []; for (var i = 0; i < lists.length; i++) if (lists[i]) out.push(lists[i]);
         return out;
       });
@@ -522,7 +544,8 @@ function getVideoSources(episodeUrl) {
       return _dispatch(resolved);
     }).catch(function () { return []; });
   });
-  return Promise.all(jobs).then(function (lists) {
+  // the fastest quality is playable right away; the slower ones get 3 s to join
+  return _gather(jobs, 3000, function (l) { return l.length; }).then(function (lists) {
     var out = [], seen = {};
     for (var i = 0; i < lists.length; i++) {
       var arr = lists[i] || [];
