@@ -110,6 +110,24 @@
       "lang": "en",
       "file": "providers/weebcentral.js",
       "nsfw": false
+    },
+    {
+      "id": "cinejoy",
+      "name": "Cinejoy",
+      "version": "1.0.5",
+      "type": "movie",
+      "lang": "en",
+      "file": "providers/cinejoy.js",
+      "nsfw": false
+    },
+    {
+      "id": "uhdmovies",
+      "name": "UHD Movies",
+      "version": "1.0.3",
+      "type": "movie",
+      "lang": "en",
+      "file": "providers/uhdmovies.js",
+      "nsfw": false
     }
   ]
 }
